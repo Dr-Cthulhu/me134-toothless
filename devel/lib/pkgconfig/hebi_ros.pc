@@ -1,0 +1,8 @@
+prefix=/home/robot/hebi_ros_ws/devel
+
+Name: hebi_ros
+Description: Description of hebi_ros
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/robot/hebi_ros_ws/devel/lib 
+Requires: 

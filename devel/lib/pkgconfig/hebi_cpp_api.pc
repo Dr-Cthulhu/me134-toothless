@@ -1,0 +1,8 @@
+prefix=/home/robot/hebi_ros_ws/devel
+
+Name: hebi_cpp_api
+Description: Description of hebi_cpp_api
+Version: 2.0.2
+Cflags: -I/home/robot/hebi_ros_ws/src/hebi_cpp_api_ros/include -I/usr/include/eigen3
+Libs: -L/home/robot/hebi_ros_ws/devel/lib -lhebic++ -lhebi
+Requires: 

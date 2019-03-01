@@ -1,0 +1,8 @@
+prefix=/home/robot/hebi_ros_ws/devel
+
+Name: hebi_cpp_api_examples
+Description: Description of hebi_cpp_api_examples
+Version: 1.0.0
+Cflags: -I/home/robot/hebi_ros_ws/devel/include
+Libs: -L/home/robot/hebi_ros_ws/devel/lib 
+Requires: roscpp actionlib std_msgs geometry_msgs message_runtime hebi_cpp_api
