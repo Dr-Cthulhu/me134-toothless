@@ -8,10 +8,12 @@
     <param name="io_method" value="mmap"/>
   </node>
 
+  <node name="image_proc" pkg="image_proc" type="image_proc" ns="cam"/>
+
   <node name="rviz" pkg="rviz" type="rviz" output="screen"
   	args="-d $(find myrobot)/rviz/viewimage.rviz"/>
 
-  <node name="face_detection" pkg="opencv_apps" type="face_detection" args="image:=/cam/image_raw">
+  <node name="face_detection" pkg="opencv_apps" type="face_detection" args="image:=/cam/image_rect">
     <remap from="facedetection/faces" to="/face"/>
   </node>
 
