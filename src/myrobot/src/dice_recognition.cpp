@@ -62,11 +62,6 @@ class DiceDetector {
 	  	// threshold
 	  	cv::threshold(dice, dice, 150, 255, cv::THRESH_BINARY | CV_THRESH_OTSU );
 
-	  	// show
-	  	cv::namedWindow("processed", true);
-	  	cv::imshow("processed", dice);
-
-
 	  	// floodfill
 		cv::floodFill(dice, cv::Point(0,0), cv::Scalar(255));
 		cv::floodFill(dice, cv::Point(0,149), cv::Scalar(255));
@@ -93,17 +88,9 @@ class DiceDetector {
 		return keypoints.size();
 	}
 
-	bool isSquare(vector<Point> contour) {
-	  	int peri = cv::arcLength(contour, true);
-	  	vector<Point> approx;
-	  	cv::approxPolyDP(contour, approx, 0.04 * peri, true);
-	  	if (approx.size() == 4) {
-		    cv::RotatedRect bound = cv::minAreaRect(contour);
-		    int ar = bound.size.width / bound.size.height;
-		    if (ar > 0.9 && ar < 1.1)
-		      	return true;
-	  	}
-	  	return false;
+	bool isRightSize(vector<Point> contour) {
+		float area = cv::contourArea(contour);
+		return (area > 1500 && area < 2000);
 	}
 
 	void findDice(const sensor_msgs::ImageConstPtr& msg) {
@@ -143,7 +130,7 @@ class DiceDetector {
 
 	    for(int i = 0; i < contours.size(); i++){
 	      	if (hierarchy[i][3] == -1) {
-		        if (!isSquare(contours[i]))
+		        if (!isRightSize(contours[i]))
 		          	continue;
 		        numberOfDice += 1;
 		        for (int j = 0; j < contours[i].size(); j++) {
