@@ -30,6 +30,8 @@ using namespace cv;
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Point.h>
 
 static const std::string OPENCV_WINDOW = "Image window";
 
@@ -38,7 +40,7 @@ class DiceDetector {
 	ros::NodeHandle nh_;
   	image_transport::ImageTransport it_;
  	image_transport::Subscriber image_sub_;
- 	image_transport::Publisher image_pub_;
+ 	ros::Publisher point_pub_;
 
  public:
  	DiceDetector()
@@ -46,7 +48,7 @@ class DiceDetector {
  	{
  		// Subscribe to input video feed and publish pointcloud
   		image_sub_ = it_.subscribe("/camera/image_raw", 1, &DiceDetector::findDice, this);
-		point_pub_ = nh_.advertise<sensor_msgs::PointCloud>("dice_points", 1);
+		point_pub_ = nh_.advertise<visualization_msgs::Marker>("dice_points", 1);
 	}
 
 	~DiceDetector() {
@@ -96,9 +98,10 @@ class DiceDetector {
 	void findDice(const sensor_msgs::ImageConstPtr& msg) {
 
 		// Initialize point-cloud
-		sensor_msgs::PointCloud all;
-		ros::Time scan_time = ros::Time::now();
+		visualization_msgs::Marker all;
 		all.header.frame_id = "world_frame";
+		all.header.stamp = ros::Time::now();
+		all.type = visualization_msgs::Marker::POINTS;
 
 		cv_bridge::CvImagePtr cv_ptr;
 		try {
@@ -110,10 +113,12 @@ class DiceDetector {
 		}
 
 	    Mat frame;
+	    Mat unprocessFrame;
 	    int totalDotCount = 0;
 	    Scalar markingColor = Scalar(0, 200, 0);
 
 	    frame = cv_ptr->image;
+	    unprocessFrame = frame.clone();
 	    
 	    inRange(unprocessFrame, Scalar(200, 200, 200), Scalar(255, 255, 255), frame);
 	    //double diceContourArea = cv::contourArea(diceContours[0]);
@@ -133,26 +138,26 @@ class DiceDetector {
 		        if (!isRightSize(contours[i]))
 		          	continue;
 		        numberOfDice += 1;
-		        for (int j = 0; j < contours[i].size(); j++) {
-		        	Point realPoint;
-		        	cv::RotatedRect bound = cv::minAreaRect(contours[i]);
-		        	realPoint.x = bound.x + bound.size.width / 2;
-		        	realPoint.y = bound.y + bound.size.width / 2;
-		        }
-		        real.append(realPoint);
+		        
+		        Point realPoint = Point(0, 0);
+		        cv::RotatedRect bound = cv::minAreaRect(contours[i]);
+		        realPoint.x = bound.center.x;
+		        realPoint.y = bound.center.y;
+		        
+		        real.push_back(realPoint);
 		    }
 	    }
 
 	    all.points.resize(numberOfDice);
 	    for (int i = 0; i < numberOfDice; i++) {
-	    	sensor_msgs::Point32 point;
+	    	geometry_msgs::Point point;
 	    	point.x = real[i].x;
 	    	point.y = real[i].y;
 	    	all.points[i] = point;
 	    }
 	    point_pub_.publish(all);
 	}
-}
+};
 
 int main( int argc, char** argv )
 {

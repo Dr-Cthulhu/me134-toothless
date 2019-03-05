@@ -12,8 +12,12 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  cv_bridge
+  visualization_msgs
+  geometry_msgs
+  image_transport
 )
-
+find_package(OpenCV REQUIRED)
 
 
 ## System dependencies are found with CMake's conventions
@@ -73,7 +77,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   sensor_msgs#   std_msgs
+#   sensor_msgs
+#   std_msgs
+#	geometry_msgs
+#	visualization_msgs
+#	image_transport
 # )
 
 ################################################
@@ -122,6 +130,10 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+include_directories(
+#include
+  ${OpenCV_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -140,6 +152,11 @@ target_link_libraries(ikin_node ${catkin_LIBRARIES})
 add_executable(state_publisher src/state_publisher.cpp)
 add_dependencies(state_publisher ${catkin_EXPORTED_TARGETS})
 target_link_libraries(state_publisher ${catkin_LIBRARIES})
+
+add_executable(dice_recognition src/dice_recognition.cpp)
+add_dependencies(dice_recognition ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dice_recognition ${catkin_LIBRARIES})
+target_link_libraries(dice_recognition ${OpenCV_LIBRARIES})
 
 #add_executable(simple_node src/simple_node.cpp)
 
