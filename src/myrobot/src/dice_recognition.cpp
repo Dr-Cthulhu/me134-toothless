@@ -48,7 +48,7 @@ class DiceDetector {
  	{
 		ros::Rate loop_rate(0.1);
  		// Subscribe to input video feed and publish pointcloud
-  		image_sub_ = it_.subscribe("/cam/image_raw", 1, &DiceDetector::findDice, this);
+  		image_sub_ = it_.subscribe("/cam/image_rect_color", 1, &DiceDetector::findDice, this);
 		point_pub_ = nh_.advertise<visualization_msgs::Marker>("dice_points", 1);
 
 		cv::namedWindow(OPENCV_WINDOW);
@@ -104,7 +104,17 @@ class DiceDetector {
 
 	bool isRightSize(vector<Point> contour) {
 		float area = cv::contourArea(contour);
-		return (area > 1500 && area < 2000);
+		return (area > 500 && area < 700);
+	}
+
+	float getX(int x) {
+		float x_adj =  45.8 - ((float(x) - 40) * (45.8 / 695) - ((x - 400) / 40000));
+		return (x_adj) / 100;
+	}
+
+	float getY(int y) {
+		float y_adj = (float(y) - 15) * (38.0 / 580) - ((y - 300) / 30000);
+		return (y_adj) / 100;
 	}
 
 	void findDice(const sensor_msgs::ImageConstPtr& msg) {
@@ -144,6 +154,7 @@ class DiceDetector {
 	    findContours(frame, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	    int numberOfDice = 0;
+	    int dotCount = 0;
 	    vector<Point> real;
 
 	    for(int i = 0; i < contours.size(); i++){
@@ -187,12 +198,13 @@ class DiceDetector {
 	    all.points.resize(numberOfDice);
 	    for (int i = 0; i < numberOfDice; i++) {
 	    	geometry_msgs::Point point;
-	    	point.x = real[i].x;
-	    	point.y = real[i].y;
+	    	point.x = getX(real[i].x);
+	    	point.y = getY(real[i].y);
 	    	all.points[i] = point;
 	    }
-	    cv::imshow(OPENCV_WINDOW, unprocessFrame);
-	    cv::waitKey(3);
+
+	    // cv::imshow(OPENCV_WINDOW, unprocessFrame);
+	    // cv::waitKey(3);
 	    point_pub_.publish(all);
 	}
 };
