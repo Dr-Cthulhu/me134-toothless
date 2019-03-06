@@ -59,9 +59,10 @@ class DiceDetector {
 		cv::destroyWindow(OPENCV_WINDOW);
 	}
 
-	int countPips(cv::Mat dice) {
+	int countPips(cv::Mat dice){
+
 	  	// resize
-		cv::resize(dice, dice, cv::Size(150, 150));
+	  	cv::resize(dice, dice, cv::Size(150, 150));
 
 	  	// convert to grayscale
 	  	cvtColor(dice, dice, CV_BGR2GRAY);
@@ -69,30 +70,36 @@ class DiceDetector {
 	  	// threshold
 	  	cv::threshold(dice, dice, 150, 255, cv::THRESH_BINARY | CV_THRESH_OTSU );
 
+	  	// show
+	  	// cv::namedWindow("processed", true);
+	  	// cv::imshow("processed", dice);
+
+
 	  	// floodfill
-		cv::floodFill(dice, cv::Point(0,0), cv::Scalar(255));
-		cv::floodFill(dice, cv::Point(0,149), cv::Scalar(255));
-		cv::floodFill(dice, cv::Point(149,0), cv::Scalar(255));
-		cv::floodFill(dice, cv::Point(149,149), cv::Scalar(255));
+	  	cv::floodFill(dice, cv::Point(0,0), cv::Scalar(255));
+	  	cv::floodFill(dice, cv::Point(0,149), cv::Scalar(255));
+	  	cv::floodFill(dice, cv::Point(149,0), cv::Scalar(255));
+	  	cv::floodFill(dice, cv::Point(149,149), cv::Scalar(255));
 
-		// search for blobs
-		cv::SimpleBlobDetector::Params params;
+	  	// search for blobs
+	  	cv::SimpleBlobDetector::Params params;
 
-		// filter by interia defines how elongated a shape is.
-		params.filterByInertia = true;
-		params.minInertiaRatio = 0.5;
+	  	// filter by interia defines how elongated a shape is.
+	  	params.filterByInertia = true;
+	  	params.minInertiaRatio = 0.5;
 
-		// will hold our keyponts
-		std::vector<cv::KeyPoint> keypoints;
+	  	// will hold our keyponts
+	  	std::vector<cv::KeyPoint> keypoints;
 
-		// create new blob detector with our parameters
-		cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
+	  	// create new blob detector with our parameters
+	  	cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
 
-		// detect blobs
-		blobDetector->detect(dice, keypoints);
+	  	// detect blobs
+	  	blobDetector->detect(dice, keypoints);
 
-		// return number of pips
-		return keypoints.size();
+
+	  	// return number of pips
+	  	return keypoints.size();
 	}
 
 	bool isRightSize(vector<Point> contour) {
@@ -151,9 +158,31 @@ class DiceDetector {
 		        realPoint.y = bound.center.y;
 		        
 		        real.push_back(realPoint);
+
+		        cv::RotatedRect rect = cv::minAreaRect(contours[i]);
+		     	float angle = rect.angle;
+		     	Size rect_size = rect.size;
+		     	// following may be unnecessary but to be on the safe side
+		    	if (rect.angle < -45.0) {
+		    		angle += 90.0;
+		    		swap(rect_size.width, rect_size.height);
+		    	}
+
+		    	Mat M, rot, crop;
+		    	M = getRotationMatrix2D(rect.center, angle, 1.0);
+		    	warpAffine(unprocessFrame, rot, M, unprocessFrame.size(), INTER_CUBIC);
+		    	getRectSubPix(rot, rect_size, rect.center, crop);
+		    	dotCount = countPips(crop);
+
+		    	stringstream stream;
+		        stream << dotCount;
+		        Moments m = moments(contours[i]);
+		        putText(unprocessFrame, stream.str(), Point(m.m10 / m.m00 + 100, m.m01 / m.m00), FONT_HERSHEY_PLAIN, 2, markingColor, 2);
+		    	
+		    	drawContours(unprocessFrame, contours, i, markingColor, 2, 8, hierarchy, 0, Point());
 		    }
 	    }
-	    ROS_INFO_STREAM("number of dice: " << numberOfDice);
+	    // ROS_INFO_STREAM("number of dice: " << numberOfDice);
 
 	    all.points.resize(numberOfDice);
 	    for (int i = 0; i < numberOfDice; i++) {
