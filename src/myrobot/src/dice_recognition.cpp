@@ -46,12 +46,17 @@ class DiceDetector {
  	DiceDetector()
   		: it_(nh_)
  	{
+		ros::Rate loop_rate(0.1);
  		// Subscribe to input video feed and publish pointcloud
-  		image_sub_ = it_.subscribe("/camera/image_raw", 1, &DiceDetector::findDice, this);
+  		image_sub_ = it_.subscribe("/cam/image_raw", 1, &DiceDetector::findDice, this);
 		point_pub_ = nh_.advertise<visualization_msgs::Marker>("dice_points", 1);
+
+		cv::namedWindow(OPENCV_WINDOW);
+		ROS_INFO_STREAM("Created new dice detector");
 	}
 
 	~DiceDetector() {
+		cv::destroyWindow(OPENCV_WINDOW);
 	}
 
 	int countPips(cv::Mat dice) {
@@ -96,6 +101,7 @@ class DiceDetector {
 	}
 
 	void findDice(const sensor_msgs::ImageConstPtr& msg) {
+		// ROS_INFO_STREAM("finding dice...");
 
 		// Initialize point-cloud
 		visualization_msgs::Marker all;
@@ -147,6 +153,7 @@ class DiceDetector {
 		        real.push_back(realPoint);
 		    }
 	    }
+	    ROS_INFO_STREAM("number of dice: " << numberOfDice);
 
 	    all.points.resize(numberOfDice);
 	    for (int i = 0; i < numberOfDice; i++) {
@@ -155,6 +162,8 @@ class DiceDetector {
 	    	point.y = real[i].y;
 	    	all.points[i] = point;
 	    }
+	    cv::imshow(OPENCV_WINDOW, unprocessFrame);
+	    cv::waitKey(3);
 	    point_pub_.publish(all);
 	}
 };
@@ -162,6 +171,7 @@ class DiceDetector {
 int main( int argc, char** argv )
 {
 	ros::init(argc, argv, "dice_publisher");
+	ROS_INFO_STREAM("dice_detector running");
 	DiceDetector dd;
 	ros::spin();
 	return 0;
